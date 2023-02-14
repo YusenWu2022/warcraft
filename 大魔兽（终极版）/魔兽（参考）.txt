@@ -1,0 +1,1095 @@
+#include <iostream>
+#include <stdlib.h>
+#include <iomanip>
+#include <string>
+using namespace std;
+class headquarter;
+bool STOP = true;
+class weapon {
+public:
+	int Num;
+	string Name;
+	weapon(string a, int b) : Name(a), Num(b) {}
+};
+class sword :public weapon {
+public:
+	int gongjili;
+	sword(int gongjili_) :weapon("sword", 0), gongjili(gongjili_) {}
+	void biandun() {
+		gongjili = (int)((double)gongjili* 0.8);
+	}
+};
+class bomb :public weapon {
+public:
+	bomb() :weapon("bomb", 1) {}
+};
+class arrow :public weapon {
+public:
+	int cishu;
+	arrow() :weapon("arrow", 2), cishu(3) {}
+};
+class worriors {
+protected:
+	headquarter * head;
+public:
+	string Name;
+	int city, Number;
+	int seimeichi, gongjili;
+	virtual void Attact(worriors* p) {
+		p->Hurted(gongjili);
+	}
+	virtual void Hurted(int Power) {
+		seimeichi -= Power;
+		if (seimeichi < 0)seimeichi = 0;
+	}
+	virtual void Fightback(worriors* p) {
+		p->Hurted(gongjili / 2);
+	}
+	virtual void qianjin(char name, int N) {
+		if (name == 'r')city++;
+		else city--;
+	}
+	worriors(int Num, int seimeichi_, int gongjili_, headquarter* h, char name, int N, string Name_)
+		:Number(Num), seimeichi(seimeichi_), gongjili(gongjili_), head(h), Name(Name_) {
+		if (name == 'b')city = N + 1;
+		else city = 0;
+	}//構造函數
+};
+class dragon :public worriors {
+public:
+	weapon * a;//武器類a的指針
+	double shiqi;
+	void Attact(worriors*p) {
+		if (!a || a->Num) {//sword編號為0，如果持有sword增加攻擊力輸出
+			p->Hurted(gongjili);
+		}
+		else {
+			p->Hurted(gongjili + ((sword*)a)->gongjili);
+			((sword*)a)->biandun();
+			if (!((sword*)a)->gongjili) {
+				free(a);
+				a = NULL;
+			}
+		}
+	}
+	void Fightback(worriors*p) {
+		if (!a || a->Num) {
+			p->Hurted(gongjili / 2);
+		}
+		else {
+			p->Hurted(gongjili / 2 + ((sword*)a)->gongjili);
+			((sword*)a)->biandun();
+			if (!((sword*)a)->gongjili) {
+				free(a);
+				a = NULL;
+			}
+		}
+	}
+	void yell(int time, string name) {
+		cout << setfill('0') << setw(3) << time << ":40 " << name
+			<< " dragon " << Number << " yelled in city " << city << endl;
+	}//歡呼
+	dragon(int Num, int seimeichi_, int gongjili_, headquarter*h, char name, int N, weapon*a_, double shiqi_)
+		:worriors(Num, seimeichi_, gongjili_, h, name, N, "dragon"), a(a_), shiqi(shiqi_) {}//構造函數
+};
+class ninja :public worriors {
+public:
+	weapon * a, *b;
+	void Attact(worriors*p) {
+		if ((!a || a->Num) && (!b || b->Num)) {
+			p->Hurted(gongjili);
+		}
+		else if (a && !a->Num) {
+			p->Hurted(gongjili + ((sword*)a)->gongjili);
+			((sword*)a)->biandun();
+			if (!((sword*)a)->gongjili) {
+				free(a);
+				a = NULL;
+			}
+		}
+		else {
+			p->Hurted(gongjili + ((sword*)b)->gongjili);
+			((sword*)b)->biandun();
+			if (!((sword*)b)->gongjili) {
+				free(b);
+				b = NULL;
+			}
+		}
+ 
+	}
+	void Fightback(worriors*p) {}//忍者不反擊
+	ninja(int Num, int seimeichi_, int gongjili_, headquarter*h, char name, int N, weapon*a_, weapon*b_)
+		:worriors(Num, seimeichi_, gongjili_, h, name, N, "ninja"), a(a_), b(b_) {}//構造函數
+};
+class iceman :public worriors {
+public:
+	weapon * a;
+	void Attact(worriors*p) {
+		if (!a || a->Num) {
+			p->Hurted(gongjili);
+		}
+		else {
+			p->Hurted(gongjili + ((sword*)a)->gongjili);
+			((sword*)a)->biandun();
+			if (!((sword*)a)->gongjili) {
+				free(a);
+				a = NULL;
+			}
+		}
+	}
+	void Fightback(worriors*p) {
+		if (!a || a->Num) {
+			p->Hurted(gongjili / 2);
+		}
+		else {
+			p->Hurted(gongjili / 2 + ((sword*)a)->gongjili);
+			((sword*)a)->biandun();
+			if (!((sword*)a)->gongjili) {
+				free(a);
+				a = NULL;
+			}
+		}
+	}
+	void qianjin(char name, int N) {
+		if (name == 'r')city++;
+		else city--;
+		if ((name == 'r' || N % 2 == 1) && city % 2 == 0 ||
+			name == 'b'&&N % 2 == 0 && city % 2 == 1) {
+			seimeichi -= 9;
+			if (seimeichi < 1)seimeichi = 1;
+			gongjili += 20;
+		}
+	}
+	iceman(int Num, int seimeichi_, int gongjili_, headquarter* h, char name, int N, weapon*a_)
+		:worriors(Num, seimeichi_, gongjili_, h, name, N, "iceman"), a(a_) {}//構造函數
+};
+class lion :public worriors {
+public:
+	int zhongchengdu, K;
+	virtual void Attact(worriors*p) {
+		if (zhongchengdu) {
+			p->Hurted(gongjili);
+			if (p->seimeichi) {
+				zhongchengdu -= K;
+				if (zhongchengdu < 0)zhongchengdu = 0;
+			}
+		}
+	}
+	virtual void Fightback(worriors* p) {
+		if (zhongchengdu) {
+			p->Hurted(gongjili / 2);
+			if (p->seimeichi) {
+				zhongchengdu -= K;
+				if (zhongchengdu < 0)zhongchengdu = 0;
+			}
+		}
+	}
+	lion(int Num, int seimeichi_, int gongjili_, headquarter*h, char name, int N, int a, int K_)
+		:worriors(Num, seimeichi_, gongjili_, h, name, N, "lion"), zhongchengdu(a), K(K_) {
+	}//構造函數
+};
+class wolf :public worriors {
+public:
+	arrow * a; bomb*b; sword*c;
+	void Attact(worriors*p) {
+		if (c) {
+			p->Hurted(gongjili + c->gongjili);
+			((sword*)c)->biandun();
+			if (!c->gongjili) {
+				free(c);
+				c = NULL;
+			}
+		}
+		else p->Hurted(gongjili);
+	}
+	void Fightback(worriors*p) {
+		if (c) {
+			p->Hurted(gongjili / 2 + c->gongjili);
+			((sword*)c)->biandun();
+			if (!c->gongjili) {
+				free(c);
+				c = NULL;
+			}
+		}
+		else p->Hurted(gongjili / 2);
+	}
+	wolf(int Num, int seimeichi_, int gongjili_, headquarter*h, char name, int N)
+		:worriors(Num, seimeichi_, gongjili_, h, name, N, "wolf") {
+		a = NULL; b = NULL; c = NULL;
+	}//構造函數
+};
+class headquarter {
+	worriors* pWorriors[5000];//存放武士的指針
+	int seimeigen, n;//武士編號n
+	char chengshi[22];//城市上的旗幟，0和N+1標記司令部的敵軍人數，靜態變量,
+					  //w表示無旗，r表示紅旗，b表示藍旗，x表示無旗但上一場戰鬥是紅方獲勝，y表示無旗但上一場戰爭藍方勝,0表示紅旗但上一場是藍方勝，1表示藍旗但上一場是紅方勝
+	int seimeigen_in_city[21];//城市裡的生命元，靜態變量
+	string worriors_Name[5];//武士名
+	int strength[5], gongjili[5];
+	int borntime;
+	int R;//arrow攻擊力
+	int K;//lion忠誠度降低常數
+	static string head_name[2];//兩個司令部的名字
+	int N;//城市數目
+	string Name;//司令部名稱
+public:
+	worriors * worriors_in_city[22][2];//城市上的武士，[0]放red，[1]放blue
+	headquarter(string Name_, int shengmingyuan, string wushi[],
+		int strength_[5], int gongjili_[5], int R_, int K_, int N_)
+	{
+		Name = Name_;
+		seimeigen = shengmingyuan;
+		for (int i = 0; i < 5; i++)
+			worriors_Name[i] = wushi[i];
+		for (int i = 0; i < 5; i++)
+			strength[i] = strength_[i];
+		for (int i = 0; i < 5; i++)
+			gongjili[i] = gongjili_[i];
+		N = N_;
+		K = K_;
+		R = R_;
+		n = 0;
+		borntime = 0;
+		if (Name[0] == 'r') {
+			chengshi[0] = '0';
+			for (int i = 1; i <= N_; i++) {
+				chengshi[i] = 'w';//無旗城市
+				seimeigen_in_city[i] = 0;
+			}
+			chengshi[N_ + 1] = '0';
+			head_name[0] = "red";
+			head_name[1] = "blue";
+			for (int i = 0; i <= N + 1; i++)
+				for (int j = 0; j < 2; j++)
+					worriors_in_city[i][j] = NULL;
+		}
+	}//構造函數
+	~headquarter() {
+		if (Name[0] == 'r')
+			for (int i = 0; i <= N + 1; i++)
+				for (int j = 0; j < 2; j++)
+					if (worriors_in_city[i][j]) {
+						free_worriors(worriors_in_city[i][j]);
+						worriors_in_city[i][j] = NULL;
+					}
+	}
+	weapon* creat_weapon(int i) {
+		switch (i)
+		{
+		case 0: {
+			int g = (int)((double)gongjili[borntime] * 0.2);
+			weapon* a;
+			if (g)
+				a = new sword(g);
+			else a = NULL;
+			return a;
+		} break;
+		case 1: {weapon* a = new bomb; return a;  }break;
+		default: {weapon* a = new arrow; return a; }break;
+		}
+	}
+	bool if_worrior_with_arrow(worriors*worrior)
+	{
+		switch (worrior->Name[0])
+		{
+		case'd':
+			if (((dragon*)worrior)->a && ((dragon*)worrior)->a->Num == 2) return true;
+			break;
+		case'n':
+			if (((ninja*)worrior)->a && ((ninja*)worrior)->a->Num == 2 ||
+				((ninja*)worrior)->b && ((ninja*)worrior)->b->Num == 2) return true;
+			break;
+		case'i':
+			if (((iceman*)worrior)->a && ((iceman*)worrior)->a->Num == 2) return true;
+			break;
+		case'w':
+			if (((wolf*)worrior)->a) return true;
+			break;
+		default:
+			break;
+		}
+		return false;
+	}
+	arrow* worrior_arrow(worriors*worrior) {
+		switch (worrior->Name[0])
+		{
+		case'd':
+			if (((dragon*)worrior)->a && ((dragon*)worrior)->a->Num == 2) return (arrow*)((dragon*)worrior)->a;
+			break;
+		case'n':
+			if (((ninja*)worrior)->a && ((ninja*)worrior)->a->Num == 2)return (arrow*)((ninja*)worrior)->a;
+			else if (((ninja*)worrior)->b && ((ninja*)worrior)->b->Num == 2) return (arrow*)((ninja*)worrior)->b;
+			break;
+		case'i':
+			if (((iceman*)worrior)->a && ((iceman*)worrior)->a->Num == 2) return (arrow*)((iceman*)worrior)->a;
+			break;
+		case'w':
+			if (((wolf*)worrior)->a) return (arrow*)((wolf*)worrior)->a;
+			break;
+		default:
+			break;
+		}
+		return NULL;
+	}
+	bool if_worrior_with_bomb(worriors*worrior)
+	{
+		switch (worrior->Name[0])
+		{
+		case'd':
+			if (((dragon*)worrior)->a && ((dragon*)worrior)->a->Num == 1) return true;
+			break;
+		case'n':
+			if (((ninja*)worrior)->a && ((ninja*)worrior)->a->Num == 1 ||
+				((ninja*)worrior)->b && ((ninja*)worrior)->b->Num == 1) return true;
+			break;
+		case'i':
+			if (((iceman*)worrior)->a && ((iceman*)worrior)->a->Num == 1) return true;
+			break;
+		case'w':
+			if (((wolf*)worrior)->b) return true;
+			break;
+		default:
+			break;
+		}
+		return false;
+	}
+	bomb* worrior_bomb(worriors*worrior) {
+		switch (worrior->Name[0])
+		{
+		case'd':
+			if (((dragon*)worrior)->a && ((dragon*)worrior)->a->Num == 1) return (bomb*)((dragon*)worrior)->a;
+			break;
+		case'n':
+			if (((ninja*)worrior)->a && ((ninja*)worrior)->a->Num == 1)return (bomb*)((ninja*)worrior)->a;
+			else if (((ninja*)worrior)->b && ((ninja*)worrior)->b->Num == 1) return (bomb*)((ninja*)worrior)->b;
+			break;
+		case'i':
+			if (((iceman*)worrior)->a && ((iceman*)worrior)->a->Num == 1) return (bomb*)((iceman*)worrior)->a;
+			break;
+		case'w':
+			if (((wolf*)worrior)->b) return (bomb*)((wolf*)worrior)->b;
+			break;
+		default:
+			break;
+		}
+		return NULL;
+	}
+	bool if_worrior_with_sword(worriors*worrior)
+	{
+		switch (worrior->Name[0])
+		{
+		case'd':
+			if (((dragon*)worrior)->a && ((dragon*)worrior)->a->Num == 0) return true;
+			break;
+		case'n':
+			if (((ninja*)worrior)->a && ((ninja*)worrior)->a->Num == 0 ||
+				((ninja*)worrior)->b && ((ninja*)worrior)->b->Num == 0) return true;
+			break;
+		case'i':
+			if (((iceman*)worrior)->a && ((iceman*)worrior)->a->Num == 0) return true;
+			break;
+		case'w':
+			if (((wolf*)worrior)->c) return true;
+			break;
+		default:
+			break;
+		}
+		return false;
+	}
+	sword* worrior_sword(worriors*worrior) {
+		switch (worrior->Name[0])intmainfslintnfsj;filsflskacasea{{]fajninjqdraondfslfsdlcasfslkdjfInfaintintmain(a
+fjfnlaffintuscase"fl
+
+fslfatimwsdwsweital
+		{
+		case'd':
+			if (((dragon*)worrior)->a && ((dragon*)worrior)->a->Num == 0) return (sword*)((dragon*)worrior)->a;
+			break;
+		case'n':
+			if (((ninja*)worrior)->a && ((ninja*)worrior)->a->Num == 0)return (sword*)((ninja*)worrior)->a;
+			else if (((ninja*)worrior)->b && ((ninja*)worrior)->b->Num == 0) return (sword*)((ninja*)worrior)->b;
+			break;
+		case'i':
+			if (((iceman*)worrior)->a && ((iceman*)worrior)->a->Num == 0) return (sword*)((iceman*)worrior)->a;
+			break;
+		case'w':
+			if (((wolf*)worrior)->c) return (sword*)((wolf*)worrior)->c;
+			break;
+		default:
+			break;
+		}
+		return NULL;
+	}
+	void make(int time, headquarter*red) {
+		int seimeigen_temp = seimeigen;
+		borntime %= 5;
+		if (seimeigen >= strength[borntime])
+		{
+			seimeigen -= strength[borntime];
+			n++;
+			cout << setfill('0') << setw(3) << time << ":00 " << Name << ' '
+				<< worriors_Name[borntime] << ' ' << n << " born" << endl;
+			switch (worriors_Name[borntime][0])
+			{
+			case'd':
+			{
+				dragon*pd;
+				pd = new dragon(n, strength[borntime], gongjili[borntime], this, Name[0], N,
+					creat_weapon(n % 3), (double)seimeigen / (double)strength[borntime]);
+				pWorriors[n] = pd;
+				cout << "Its morale is " << fixed << setprecision(2) << pd->shiqi << endl;
+			}
+			break;
+			case'n':
+			{
+				ninja*pn;
+				pn = new ninja(n, strength[borntime], gongjili[borntime], this, Name[0], N,
+					creat_weapon(n % 3), creat_weapon((n + 1) % 3));
+				pWorriors[n] = pn;
+			}
+			break;
+			case'i':
+			{
+				iceman*pi;
+				pi = new iceman(n, strength[borntime], gongjili[borntime], this, Name[0], N,
+					creat_weapon(n % 3));
+				pWorriors[n] = pi;
+			}
+			break;
+			case'l':
+			{
+				cout << "Its loyalty is " << seimeigen << endl;
+				lion*pl;
+				pl = new lion(n, strength[borntime], gongjili[borntime], this, Name[0], N,
+					seimeigen, K);
+				pWorriors[n] = pl;
+			}
+			break;
+			default: {//wolf
+				wolf*pw;
+				pw = new wolf(n, strength[borntime], gongjili[borntime], this, Name[0], N);
+				pWorriors[n] = pw;
+			}
+					 break;
+			}
+			if (Name[0] == 'r')
+				worriors_in_city[0][0] = pWorriors[n];
+			else red->worriors_in_city[N + 1][1] = pWorriors[n];
+			pWorriors[n] = NULL;
+			borntime++;
+		}
+	}//（沒寫）如果司令部中的生命元不足以制造某武士，那么司令部就等待，直到获得足够生命元后的第一个整点，才制造该武士。
+	void free_worriors(worriors*worrior) {
+		switch (worrior->Name[0])
+		{
+		case'd':
+			if (((dragon*)worrior)->a) {
+				free(((dragon*)worrior)->a);
+				((dragon*)worrior)->a = NULL;
+			}
+			free((dragon*)worrior);
+			break;
+		case'n':
+			if (((ninja*)worrior)->a) {
+				free(((ninja*)worrior)->a);
+				((ninja*)worrior)->a = NULL;
+			}
+			if (((ninja*)worrior)->b) {
+				free(((ninja*)worrior)->b);
+				((ninja*)worrior)->b = NULL;
+			}
+			free((ninja*)worrior);
+			break;
+		case'i':
+			if (((iceman*)worrior)->a) {
+				free(((iceman*)worrior)->a);
+				((iceman*)worrior)->a = NULL;
+			}
+			free((iceman*)worrior);
+			break;
+		case'w':
+			if (((wolf*)worrior)->a) {
+				free(((wolf*)worrior)->a);
+				((wolf*)worrior)->a = NULL;
+			}
+			if (((wolf*)worrior)->b) {
+				free(((wolf*)worrior)->b);
+				((wolf*)worrior)->b = NULL;
+			}
+			if (((wolf*)worrior)->c) {
+				free(((wolf*)worrior)->c);
+				((wolf*)worrior)->c = NULL;
+			}
+			free((wolf*)worrior);
+			break;
+		default:free((lion*)worrior);
+			break;
+		}
+	}//武器也要free
+	void free_weapon(worriors*worrior, int Number) {//前提是已經知道有這個weapon
+		switch (worrior->Name[0])
+		{
+		case'd':
+			if (((dragon*)worrior)->a->Num == Number) {
+				free(((dragon*)worrior)->a);
+				((dragon*)worrior)->a = NULL;
+			}
+			break;
+		case'n':
+			if (((ninja*)worrior)->a->Num == Number) {
+				free(((ninja*)worrior)->a);
+				((ninja*)worrior)->a = NULL;
+			}
+			else if (((ninja*)worrior)->b->Num == Number) {
+				free(((ninja*)worrior)->b);
+				((ninja*)worrior)->b = NULL;
+			}
+			break;
+		case'i':
+			if (((iceman*)worrior)->a->Num == Number) {
+				free(((iceman*)worrior)->a);
+				((iceman*)worrior)->a = NULL;
+			}
+			break;
+		case'w':
+			switch (Number)
+			{
+			case 0:
+				free(((wolf*)worrior)->c);
+				((wolf*)worrior)->c = NULL;
+				break;
+			case 1:
+				free(((wolf*)worrior)->b);
+				((wolf*)worrior)->b = NULL;
+				break;
+			case 2:
+				free(((wolf*)worrior)->a);
+				((wolf*)worrior)->a = NULL;
+				break;
+			default:
+				break;
+			}
+		default:
+			break;
+		}
+	}
+	void do05(int time) {
+		for (int i = 0; i <= N + 1; i++)
+			for (int j = 0; j < 2; j++)
+				if (worriors_in_city[i][j] && worriors_in_city[i][j]->Name[0] == 'l' &&
+					!((lion*)worriors_in_city[i][j])->zhongchengdu) {
+					cout << setfill('0') << setw(3) << time << ":05 " << head_name[j]
+						<< " lion " << worriors_in_city[i][j]->Number
+						<< " ran away" << endl;
+					free_worriors(worriors_in_city[i][j]);
+					worriors_in_city[i][j] = NULL;
+				}
+	}
+	void do10(int time) {
+		for (int i = 0; i <= N + 1; i++) {
+			if (i > 0 && worriors_in_city[i - 1][0]) {
+				if (i <= N) {
+					worriors_in_city[i - 1][0]->qianjin(head_name[0][0], N);
+					cout << setfill('0') << setw(3) << time << ":10 red "
+						<< worriors_in_city[i - 1][0]->Name << ' ' << worriors_in_city[i - 1][0]->Number
+						<< " marched to city " << worriors_in_city[i - 1][0]->city << " with "
+						<< worriors_in_city[i - 1][0]->seimeichi << " elements and force "
+						<< worriors_in_city[i - 1][0]->gongjili << endl;
+				}
+				else if (i = N + 1) {
+					worriors_in_city[i - 1][0]->qianjin(head_name[0][0], N);
+					cout << setfill('0') << setw(3) << time << ":10 red "
+						<< worriors_in_city[i - 1][0]->Name << ' ' << worriors_in_city[i - 1][0]->Number
+						<< " reached blue headquarter with " << worriors_in_city[i - 1][0]->seimeichi
+						<< " elements and force " << worriors_in_city[i - 1][0]->gongjili << endl;
+					if (!worriors_in_city[i][0]) {
+						worriors_in_city[i][0] = worriors_in_city[i - 1][0];
+						worriors_in_city[i - 1][0] = NULL;
+					}
+					else
+					{
+						free_worriors(worriors_in_city[N + 1][0]);
+						free_worriors(worriors_in_city[N][0]);
+						worriors_in_city[N + 1][0] = NULL;
+						worriors_in_city[N][0] = NULL;
+						cout << setfill('0') << setw(3) << time
+							<< ":10 blue headquarter was taken" << endl;
+						STOP = false;
+					}
+				}
+			}
+			if (i < N + 1 && worriors_in_city[i + 1][1]) {
+				if (i > 0) {
+					worriors_in_city[i + 1][1]->qianjin(head_name[1][0], N);
+					worriors_in_city[i][1] = worriors_in_city[i + 1][1];
+					worriors_in_city[i + 1][1] = NULL;
+					cout << setfill('0') << setw(3) << time << ":10 blue "
+						<< worriors_in_city[i][1]->Name << ' ' << worriors_in_city[i][1]->Number
+						<< " marched to city " << worriors_in_city[i][1]->city << " with "
+						<< worriors_in_city[i][1]->seimeichi << " elements and force "
+						<< worriors_in_city[i][1]->gongjili << endl;
+				}
+				else if (!i) {
+					worriors_in_city[i + 1][1]->qianjin(head_name[1][0], N);
+					cout << setfill('0') << setw(3) << time << ":10 blue "
+						<< worriors_in_city[i + 1][1]->Name << ' ' << worriors_in_city[i + 1][1]->Number
+						<< " reached red headquarter with " << worriors_in_city[i + 1][1]->seimeichi
+						<< " elements and force " << worriors_in_city[i + 1][1]->gongjili << endl;
+					if (!worriors_in_city[i][1]) {
+						worriors_in_city[i][1] = worriors_in_city[i + 1][1];
+						worriors_in_city[i + 1][1] = NULL;
+					}
+					else
+					{
+						free_worriors(worriors_in_city[0][1]);
+						free_worriors(worriors_in_city[1][1]);
+						worriors_in_city[0][1] = NULL;
+						worriors_in_city[1][1] = NULL;
+						cout << setfill('0') << setw(3) << time
+							<< ":10 red headquarter was taken" << endl;
+						STOP = false;
+					}
+				}
+			}
+		}
+		for (int i = N; i > 0; i--)
+			if (worriors_in_city[i - 1][0]) {
+				worriors_in_city[i][0] = worriors_in_city[i - 1][0];
+				worriors_in_city[i - 1][0] = NULL;
+			}
+	}
+	void do20() {
+		for (int i = 1; i <= N; i++) {
+			seimeigen_in_city[i] += 10;
+		}
+	}
+	void do30(headquarter*blue, int time) {
+		for (int i = 1; i <= N; i++)
+			if (worriors_in_city[i][0] != NULL && worriors_in_city[i][1] == NULL) {
+				seimeigen += seimeigen_in_city[i];
+				cout << setfill('0') << setw(3) << time << ":30 red "
+					<< worriors_in_city[i][0]->Name << ' ' << worriors_in_city[i][0]->Number
+					<< " earned " << seimeigen_in_city[i]
+					<< " elements for his headquarter" << endl;
+				seimeigen_in_city[i] = 0;
+			}
+			else if (worriors_in_city[i][0] == NULL && worriors_in_city[i][1] != NULL) {
+				blue->seimeigen += seimeigen_in_city[i];
+				cout << setfill('0') << setw(3) << time << ":30 blue "
+					<< worriors_in_city[i][1]->Name << ' ' << worriors_in_city[i][1]->Number
+					<< " earned " << seimeigen_in_city[i]
+					<< " elements for his headquarter" << endl;
+				seimeigen_in_city[i] = 0;
+			}
+	}
+	void do35(int time) {
+		for (int i = 1; i <= N; i++) {//思路，自西向東一個一個來
+			if (worriors_in_city[i][0] && if_worrior_with_arrow(worriors_in_city[i][0])) {
+				if (worriors_in_city[i + 1][1]) {
+					worriors_in_city[i + 1][1]->Hurted(R);
+					worrior_arrow(worriors_in_city[i][0])->cishu--;
+					if (worrior_arrow(worriors_in_city[i][0])->cishu == 0)
+						free_weapon(worriors_in_city[i][0], 2);
+					cout << setfill('0') << setw(3) << time << ":35 red "
+						<< worriors_in_city[i][0]->Name << ' ' << worriors_in_city[i][0]->Number
+						<< " shot";
+					if (worriors_in_city[i + 1][1]->seimeichi == 0)
+						cout << " and killed blue " << worriors_in_city[i + 1][1]->Name << ' ' << worriors_in_city[i + 1][1]->Number;
+					cout << endl;
+				}
+			}
+			if (worriors_in_city[i][1] && if_worrior_with_arrow(worriors_in_city[i][1])) {
+				if (worriors_in_city[i - 1][0]) {
+					worriors_in_city[i - 1][0]->Hurted(R);
+					worrior_arrow(worriors_in_city[i][1])->cishu--;
+					if (worrior_arrow(worriors_in_city[i][1])->cishu == 0)
+						free_weapon(worriors_in_city[i][1], 2);
+					cout << setfill('0') << setw(3) << time << ":35 blue "
+						<< worriors_in_city[i][1]->Name << ' ' << worriors_in_city[i][1]->Number
+						<< " shot";
+					if (worriors_in_city[i - 1][0]->seimeichi == 0)
+						cout << " and killed red " << worriors_in_city[i - 1][0]->Name << ' ' << worriors_in_city[i - 1][0]->Number;
+					cout << endl;
+				}
+			}
+		}
+	}
+	bool korosarerunoka(int i, int x_, int y_, int x_seimeichi, int y_seimeichi, char name) {
+		int x, gongjili = 0;
+		switch (chengshi[i])
+		{
+		case 'r':
+		case '0':
+			x = 0;
+			break;
+		case 'b':
+		case '1':
+			x = 1;
+			break;
+		default:if (i % 2) x = 0;
+				else  x = 1;
+				break;
+		}
+		if (x != x_) {
+			gongjili = worriors_in_city[i][y_]->gongjili;
+			if (if_worrior_with_sword(worriors_in_city[i][y_]))gongjili += worrior_sword(worriors_in_city[i][y_])->gongjili;
+		}
+		else if (name != 'n' && !korosarerunoka(i, y_, x_, y_seimeichi, 0, 0)) {//（沒寫）可能自己先打死了他
+			gongjili = worriors_in_city[i][y_]->gongjili / 2;
+			if (if_worrior_with_sword(worriors_in_city[i][y_]))gongjili += worrior_sword(worriors_in_city[i][y_])->gongjili;
+		}
+		if (gongjili >= x_seimeichi)return 1;
+		else return 0;
+	}
+	void do38(int time) {//bomb之後的武士直接free掉，不參與40min的戰鬥
+		for (int i = 1; i <= N; i++)
+			for (int x = 0, y = 1; x < 2; x++, y--)
+			{
+				if (worriors_in_city[i][x] && worriors_in_city[i][x]->seimeichi && if_worrior_with_bomb(worriors_in_city[i][x]) && worriors_in_city[i][y] && worriors_in_city[i][y]->seimeichi)
+					if (korosarerunoka(i, x, y, worriors_in_city[i][x]->seimeichi, worriors_in_city[i][y]->seimeichi, worriors_in_city[i][y]->Name[0])) {
+						cout << setfill('0') << setw(3) << time << ":38 " << head_name[x] << ' '
+							<< worriors_in_city[i][x]->Name << ' ' << worriors_in_city[i][x]->Number
+							<< " used a bomb and killed " << head_name[y] << ' ' << worriors_in_city[i][y]->Name << ' ' << worriors_in_city[i][y]->Number << endl;
+						free_worriors(worriors_in_city[i][x]);
+						free_worriors(worriors_in_city[i][y]);
+						worriors_in_city[i][x] = NULL;
+						worriors_in_city[i][y] = NULL;
+					}
+			}
+	}
+	void weapon_NULL(worriors*worrior) {
+		switch (worrior->Name[0])
+		{
+		case'd':
+			if (((dragon*)worrior)->a)((dragon*)worrior)->a = NULL;
+			break;
+		case'n':
+			if (((ninja*)worrior)->a)(((ninja*)worrior)->a) = NULL;
+			if (((ninja*)worrior)->b)(((ninja*)worrior)->b) = NULL;
+			break;
+		case'i':
+			if (((iceman*)worrior)->a)(((iceman*)worrior)->a) = NULL;
+			break;
+		case'w':
+			if (((wolf*)worrior)->a)(((wolf*)worrior)->a) = NULL;
+			if (((wolf*)worrior)->b)(((wolf*)worrior)->b) = NULL;
+			if (((wolf*)worrior)->c)(((wolf*)worrior)->c) = NULL;
+			break;
+		default:
+			break;
+		}
+	}
+	void do40(headquarter*blue, int time) {
+		for (int i = 1; i <= N; i++) {
+			if (worriors_in_city[i][0] && worriors_in_city[i][1] && (worriors_in_city[i][0]->seimeichi || worriors_in_city[i][1]->seimeichi)) {
+				int x, y;
+				switch (chengshi[i])
+				{
+				case 'r':
+				case '0':
+					x = 0;
+					y = 1;
+					break;
+				case 'b':
+				case '1':
+					x = 1;
+					y = 0;
+					break;
+				default:if (i % 2) { x = 0; y = 1; }
+						else { x = 1; y = 0; }
+						break;
+				}
+				if (worriors_in_city[i][0]->seimeichi && worriors_in_city[i][1]->seimeichi)
+				{
+					int lion_seimeichi_x = 0, lion_seimeichi_y = 0;
+					if (worriors_in_city[i][x]->Name[0] == 'l')lion_seimeichi_x = worriors_in_city[i][x]->seimeichi;
+					if (worriors_in_city[i][y]->Name[0] == 'l')lion_seimeichi_y = worriors_in_city[i][y]->seimeichi;
+					worriors_in_city[i][x]->Attact(worriors_in_city[i][y]);
+					cout << setfill('0') << setw(3) << time << ":40 " << head_name[x] << ' '
+						<< worriors_in_city[i][x]->Name << ' ' << worriors_in_city[i][x]->Number
+						<< " attacked " << head_name[y] << ' ' << worriors_in_city[i][y]->Name << ' ' << worriors_in_city[i][y]->Number
+						<< " in city " << i << " with " << worriors_in_city[i][x]->seimeichi << " elements and force " << worriors_in_city[i][x]->gongjili << endl;
+					if (worriors_in_city[i][y]->seimeichi > 0 && worriors_in_city[i][y]->Name[0] != 'n')
+					{
+						worriors_in_city[i][y]->Fightback(worriors_in_city[i][x]);
+						cout << setfill('0') << setw(3) << time << ":40 " << head_name[y] << ' '
+							<< worriors_in_city[i][y]->Name << ' ' << worriors_in_city[i][y]->Number
+							<< " fought back against " << head_name[x] << ' ' << worriors_in_city[i][x]->Name << ' ' << worriors_in_city[i][x]->Number
+							<< " in city " << i << endl;
+					}
+					if (!worriors_in_city[i][y]->seimeichi) {
+						cout << setfill('0') << setw(3) << time << ":40 " << head_name[y] << ' '
+							<< worriors_in_city[i][y]->Name << ' ' << worriors_in_city[i][y]->Number
+							<< " was killed in city " << i << endl;
+						if (worriors_in_city[i][y]->Name[0] == 'l')
+							worriors_in_city[i][x]->seimeichi += lion_seimeichi_y;
+					}
+					else if (!worriors_in_city[i][x]->seimeichi) {
+						cout << setfill('0') << setw(3) << time << ":40 " << head_name[x] << ' '
+							<< worriors_in_city[i][x]->Name << ' ' << worriors_in_city[i][x]->Number
+							<< " was killed in city " << i << endl;
+						if (worriors_in_city[i][x]->Name[0] == 'l')
+							worriors_in_city[i][y]->seimeichi += lion_seimeichi_x;
+					}
+				}
+				if (worriors_in_city[i][x]->Name[0] == 'd'&&worriors_in_city[i][x]->seimeichi) //dragon主動攻擊后改變士氣值與歡呼
+				{
+					if (worriors_in_city[i][y]->seimeichi)
+						((dragon*)worriors_in_city[i][x])->shiqi -= (float)0.2;
+					else((dragon*)worriors_in_city[i][x])->shiqi += (float)0.2;
+					if (((dragon*)worriors_in_city[i][x])->shiqi > 0.8)
+						((dragon*)worriors_in_city[i][x])->yell(time, head_name[x]);
+				}
+				if (worriors_in_city[i][0]->seimeichi && !worriors_in_city[i][1]->seimeichi)//把x變成獲勝一方的數字
+				{
+					x = 0;
+					y = 1;
+				}
+				else if (!worriors_in_city[i][0]->seimeichi && worriors_in_city[i][1]->seimeichi)
+				{
+					x = 1;
+					y = 0;
+				}
+				else x = y = -1;
+				if (x == 0 && seimeigen >= 8) {//（沒寫）如果司令部的生命元不足以奖励所有的武士，则优先奖励距离敌方司令部近的武士。(紅方的bug)
+					seimeigen -= 8;
+					worriors_in_city[i][0]->seimeichi += 8;
+				}
+				else if (x == 1 && blue->seimeigen >= 8) {
+					blue->seimeigen -= 8;
+					worriors_in_city[i][1]->seimeichi += 8;
+				}
+				if (x >= 0 && worriors_in_city[i][x]->Name[0] == 'w')//wolf繳獲武器
+				{
+					if (!((wolf*)worriors_in_city[i][x])->a&&if_worrior_with_arrow(worriors_in_city[i][y]))
+						((wolf*)worriors_in_city[i][x])->a = worrior_arrow(worriors_in_city[i][y]);
+					if (!((wolf*)worriors_in_city[i][x])->b&&if_worrior_with_bomb(worriors_in_city[i][y]))
+						((wolf*)worriors_in_city[i][x])->b = worrior_bomb(worriors_in_city[i][y]);
+					if (!((wolf*)worriors_in_city[i][x])->c&&if_worrior_with_sword(worriors_in_city[i][y]))
+						((wolf*)worriors_in_city[i][x])->c = worrior_sword(worriors_in_city[i][y]);
+					weapon_NULL(worriors_in_city[i][y]);
+				}
+				if (x >= 0)//武士获取生命元
+				{
+					if (x)blue->seimeigen += seimeigen_in_city[i];
+					else seimeigen += seimeigen_in_city[i];
+					cout << setfill('0') << setw(3) << time << ":40 " << head_name[x] << ' '
+						<< worriors_in_city[i][x]->Name << ' ' << worriors_in_city[i][x]->Number
+						<< " earned " << seimeigen_in_city[i] << " elements for his headquarter" << endl;
+					seimeigen_in_city[i] = 0;
+				}
+				switch (x)//處理旗幟
+				{
+				case -1:
+					switch (chengshi[i])
+					{
+					case 'x':
+					case 'y':
+						chengshi[i] = 'w';
+						break;
+					case '0':
+						chengshi[i] = 'r';
+						break;
+					case '1':
+						chengshi[i] = 'b';
+						break;
+					default:
+						break;
+					}
+					break;
+				case 0:
+					switch (chengshi[i])
+					{
+					case 'b':
+						chengshi[i] = '1';
+						break;
+					case 'w':
+					case 'y':
+						chengshi[i] = 'x';
+						break;
+					case '0':
+						chengshi[i] = 'r';
+						break;
+					case '1':
+					case 'x':
+						chengshi[i] = 'r';
+						cout << setfill('0') << setw(3) << time << ":40 red flag raised in city " << i << endl;
+						break;
+					default:
+						break;
+					}
+					break;
+				case 1:
+					switch (chengshi[i])
+					{
+					case 'r':
+						chengshi[i] = '0';
+						break;
+					case 'w':
+					case 'x':
+						chengshi[i] = 'y';
+						break;
+					case '1':
+						chengshi[i] = 'b';
+						break;
+					case 'y':
+					case '0':
+						chengshi[i] = 'b';
+						cout << setfill('0') << setw(3) << time << ":40 blue flag raised in city " << i << endl;
+						break;
+					default:
+						break;
+					}
+					break;
+				default:
+					break;
+				}
+			}
+			if (worriors_in_city[i][0] && !worriors_in_city[i][0]->seimeichi) {
+				free_worriors(worriors_in_city[i][0]);
+				worriors_in_city[i][0] = NULL;
+			}
+			if (worriors_in_city[i][1] && !worriors_in_city[i][1]->seimeichi) {
+				free_worriors(worriors_in_city[i][1]);
+				worriors_in_city[i][1] = NULL;
+			}
+		}
+	}
+	void do50(headquarter*blue, int time) {
+		cout << setfill('0') << setw(3) << time << ":50 " << seimeigen << " elements in red headquarter" << endl;
+		cout << setfill('0') << setw(3) << time << ":50 " << blue->seimeigen << " elements in blue headquarter" << endl;
+	}
+	void do55(int time) {
+		for (int x = 0; x < 2; x++)
+			for (int i = 0; i <= N + 1; i++)
+				if (worriors_in_city[i][x])
+				{
+					cout << setfill('0') << setw(3) << time << ":55 " << head_name[x] << ' '
+						<< worriors_in_city[i][x]->Name << ' ' << worriors_in_city[i][x]->Number << " has ";
+					switch (worriors_in_city[i][x]->Name[0])
+					{
+					case'd':
+						if (((dragon*)worriors_in_city[i][x])->a)
+							switch (((dragon*)worriors_in_city[i][x])->a->Num)
+							{
+							case 0:cout << "sword(" << ((sword*)((dragon*)worriors_in_city[i][x])->a)->gongjili << ')' << endl; break;
+							case 1:cout << "bomb" << endl; break;
+							case 2:cout << "arrow(" << ((arrow*)((dragon*)worriors_in_city[i][x])->a)->cishu << ')' << endl; break;
+							default:
+								break;
+							}
+						else cout << "no weapon" << endl;
+						break;
+					case'i':
+						if (((iceman*)worriors_in_city[i][x])->a)
+							switch (((iceman*)worriors_in_city[i][x])->a->Num)
+							{
+							case 0:cout << "sword(" << ((sword*)((iceman*)worriors_in_city[i][x])->a)->gongjili << ')' << endl; break;
+							case 1:cout << "bomb" << endl; break;
+							case 2:cout << "arrow(" << ((arrow*)((iceman*)worriors_in_city[i][x])->a)->cishu << ')' << endl; break;
+							default:
+								break;
+							}
+						else cout << "no weapon" << endl;
+						break;
+					case'n':
+					case'w':
+						if (if_worrior_with_arrow(worriors_in_city[i][x])) {
+							cout << "arrow(" << (worrior_arrow(worriors_in_city[i][x]))->cishu << ')';
+							if (if_worrior_with_bomb(worriors_in_city[i][x])) {
+								cout << ",bomb";
+								if (if_worrior_with_sword(worriors_in_city[i][x]))
+									cout << ",sword(" << (worrior_sword(worriors_in_city[i][x]))->gongjili << ')';
+							}
+							else if (if_worrior_with_sword(worriors_in_city[i][x]))
+								cout << ",sword(" << (worrior_sword(worriors_in_city[i][x]))->gongjili << ')';
+						}
+						else {
+							if (if_worrior_with_bomb(worriors_in_city[i][x])) {
+								cout << "bomb";
+								if (if_worrior_with_sword(worriors_in_city[i][x]))
+									cout << ",sword(" << (worrior_sword(worriors_in_city[i][x]))->gongjili << ')';
+							}
+							else if (if_worrior_with_sword(worriors_in_city[i][x]))
+								cout << "sword(" << (worrior_sword(worriors_in_city[i][x]))->gongjili << ')';
+							else cout << "no weapon";
+						}
+						cout << endl;
+						break;
+					default:cout << "no weapon" << endl;
+						break;
+					}
+				}
+	}
+};
+string headquarter::head_name[2] = { "red", "blue" };
+int main() {
+	int suikai, konkai;
+	cin >> suikai;
+	for (konkai = 0; konkai < suikai; konkai++)
+	{
+		int M, N, R, K, T, s_dragon, s_ninja, s_iceman, s_lion, s_wolf,
+			g_dragon, g_ninja, g_iceman, g_lion, g_wolf;//分別定義生命值和攻擊力
+		int time = 0;
+		cout << "Case " << konkai + 1 << ':' << endl;
+		cin >> M >> N >> R >> K >> T;
+		cin >> s_dragon >> s_ninja >> s_iceman >> s_lion >> s_wolf;
+		cin >> g_dragon >> g_ninja >> g_iceman >> g_lion >> g_wolf;
+		string red_wushi[] = { "iceman","lion","wolf","ninja", "dragon" },
+			blue_wushi[] = { "lion","dragon","ninja","iceman","wolf" };
+		int red_strength[] = { s_iceman, s_lion ,s_wolf, s_ninja,s_dragon },
+			blue_strength[] = { s_lion, s_dragon, s_ninja, s_iceman, s_wolf };
+		int red_gongjili[] = { g_iceman, g_lion ,g_wolf, g_ninja,g_dragon },
+			blue_gongjili[] = { g_lion, g_dragon, g_ninja, g_iceman, g_wolf };
+		headquarter red("red", M, red_wushi, red_strength, red_gongjili, R, K, N),
+			blue("blue", M, blue_wushi, blue_strength, blue_gongjili, R, K, N);
+		while (time + 60 <= T && STOP) {
+			red.make(time / 60, &red);
+			blue.make(time / 60, &red);
+			red.do05(time / 60);
+			red.do10(time / 60);
+			if (!STOP)break;
+			red.do20();
+			red.do30(&blue, time / 60);
+			red.do35(time / 60);
+			red.do38(time / 60);
+			red.do40(&blue, time / 60);
+			red.do50(&blue, time / 60);
+			red.do55(time / 60);
+			time += 60;
+		}
+		while (time <= T && STOP) {
+			red.make(time / 60, &red);
+			blue.make(time / 60, &red);
+			time += 5;
+			if (time <= T)red.do05(time / 60);
+			else break;
+			time += 5;
+			if (time <= T)red.do10(time / 60);
+			else break;
+			if (!STOP)break;
+			time += 10;
+			if (time <= T)red.do20();
+			else break;
+			time += 10;
+			if (time <= T)red.do30(&blue, time / 60);
+			else break;
+			time += 5;
+			if (time <= T)red.do35(time / 60);
+			else break;
+			time += 3;
+			if (time <= T)red.do38(time / 60);
+			else break;
+			time += 2;
+			if (time <= T)red.do40(&blue, time / 60);
+			else break;
+			time += 10;
+			if (time <= T)red.do50(&blue, time / 60);
+			else break;
+			time += 5;
+			if (time <= T)red.do55(time / 60);
+		}
+		STOP = true;
+	}
+	return 0;
+}
